@@ -14,9 +14,9 @@ class TrainVoiceGuide: Form
 		Application.Run(new TrainVoiceGuide());
 	}
 
-	private static string DistanceToVoiceString(float distance)
+	private static string DistanceToVoiceString(float distance, bool useCentimeter = false)
 	{
-		if (Math.Abs(distance) <= 3)
+		if (useCentimeter && Math.Abs(distance) <= 3)
 		{
 			int value = (int)Math.Round(distance * 100);
 			if (value < 0)
@@ -552,6 +552,7 @@ class TrainVoiceGuide: Form
 
 			// 残り距離・時間の読み上げを行うかの判定をする
 			bool readDistanceTime = false;
+			bool readDistanceTimeBecauseStop = false;
 			if (prevSpeed.HasValue)
 			{
 				// 発車時 (速度ゼロ → 速度非ゼロ)
@@ -562,7 +563,8 @@ class TrainVoiceGuide: Form
 				// 停車時 (速度非ゼロ → 速度ゼロ)
 				if (distanceTimeTriggerStopCheck.Checked)
 				{
-					readDistanceTime = readDistanceTime || (prevSpeed.Value != 0 && speed == 0);
+					readDistanceTimeBecauseStop = prevSpeed.Value != 0 && speed == 0;
+					readDistanceTime = readDistanceTime || readDistanceTimeBecauseStop;
 				}
 			}
 			// 次駅変化
@@ -603,14 +605,20 @@ class TrainVoiceGuide: Form
 			if (readDistanceTime)
 			{
 				string time = TimeToVoiceString(nextStationTime.Value);
-				string distance = DistanceToVoiceString(nextStationDistance);
+				string distance = DistanceToVoiceString(nextStationDistance, readDistanceTimeBecauseStop);
 				string voiceStr = null;
 				if (distanceTimeEnableTimeRadio.Checked) voiceStr = time;
 				if (distanceTimeEnableDistanceRadio.Checked) voiceStr = distance;
 				else if (distanceTimeEnableTimeDistanceRadio.Checked) voiceStr = time + "," + distance;
 				else if (distanceTimeEnableDistanceTimeRadio.Checked) voiceStr = distance + "," + time;
 				if (voiceStr != null)
-					distanceTimeTalker.Play(voiceStr, (int)distanceTimeSpeedInput.Value, Talker.PlayType.IgnoreIfPlaying);
+				{
+					distanceTimeTalker.Play(
+						voiceStr,
+						(int)distanceTimeSpeedInput.Value,
+						readDistanceTimeBecauseStop ? Talker.PlayType.QueueIfPlaying : Talker.PlayType.IgnoreIfPlaying
+					);
+				}
 			}
 
 			// 速度制限およびその予告の読み上げを行うかの判定をする
