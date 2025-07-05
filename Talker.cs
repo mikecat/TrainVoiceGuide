@@ -18,6 +18,13 @@ class Talker: IDisposable
 	[DllImport("AquesTalkDa.dll", ExactSpelling = true)]
 	private static extern int AquesTalkDa_IsPlay(IntPtr hMe);
 
+	public enum PlayType
+	{
+		IgnoreIfPlaying,
+		OverrideIfPlaying,
+		QueueIfPlaying,
+	}
+
 	private IntPtr synthInstance;
 
 	public Talker()
@@ -34,13 +41,13 @@ class Talker: IDisposable
 		}
 	}
 
-	public void Play(string voiceString, int speed, bool force)
+	public void Play(string voiceString, int speed, PlayType playType)
 	{
 		if (synthInstance == IntPtr.Zero) throw new ObjectDisposedException("cannot play after disposed");
 		if (AquesTalkDa_IsPlay(synthInstance) != 0)
 		{
-			if (force) AquesTalkDa_Stop(synthInstance);
-			else return;
+			if (playType == PlayType.IgnoreIfPlaying) return;
+			else if (playType == PlayType.OverrideIfPlaying) AquesTalkDa_Stop(synthInstance);
 		}
 		AquesTalkDa_Play(synthInstance, voiceString, speed, IntPtr.Zero, 0, 0);
 	}

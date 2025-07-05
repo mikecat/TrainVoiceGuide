@@ -610,7 +610,7 @@ class TrainVoiceGuide: Form
 				else if (distanceTimeEnableTimeDistanceRadio.Checked) voiceStr = time + "," + distance;
 				else if (distanceTimeEnableDistanceTimeRadio.Checked) voiceStr = distance + "," + time;
 				if (voiceStr != null)
-					distanceTimeTalker.Play(voiceStr, (int)distanceTimeSpeedInput.Value, false);
+					distanceTimeTalker.Play(voiceStr, (int)distanceTimeSpeedInput.Value, Talker.PlayType.IgnoreIfPlaying);
 			}
 
 			// 速度制限およびその予告の読み上げを行うかの判定をする
@@ -667,7 +667,7 @@ class TrainVoiceGuide: Form
 					else if (readSpeedNotice) voiceStr = notice;
 				}
 				if (voiceStr != null)
-					speedTalker.Play(voiceStr, (int)speedSpeedInput.Value, true);
+					speedTalker.Play(voiceStr, (int)speedSpeedInput.Value, Talker.PlayType.OverrideIfPlaying);
 			}
 
 			prevNextStationIndex = nextStationIndex;
@@ -688,7 +688,7 @@ class TrainVoiceGuide: Form
 		else if (distanceTimeEnableTimeDistanceRadio.Checked) voiceStr = time + "," + distance;
 		else if (distanceTimeEnableDistanceTimeRadio.Checked) voiceStr = distance + "," + time;
 		else voiceStr = time; // 「なし」の場合も、テスト用に再生する
-		testTalker.Play(voiceStr, (int)distanceTimeSpeedInput.Value, true);
+		testTalker.Play(voiceStr, (int)distanceTimeSpeedInput.Value, Talker.PlayType.OverrideIfPlaying);
 	}
 
 	private void SpeedSpeedTestClickHandler(object sender, EventArgs e)
@@ -700,6 +700,6 @@ class TrainVoiceGuide: Form
 		else if (speedLimitNoticeRadio.Checked) voiceStr = limit + "," + notice;
 		else if (speedNoticeLimitRadio.Checked) voiceStr = notice + "," + limit;
 		else voiceStr = limit; // 「なし」の場合も、テスト用に再生する
-		testTalker.Play(voiceStr, (int)speedSpeedInput.Value, true);
+		testTalker.Play(voiceStr, (int)speedSpeedInput.Value, Talker.PlayType.OverrideIfPlaying);
 	}
 }
