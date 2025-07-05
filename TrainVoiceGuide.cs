@@ -640,7 +640,7 @@ class TrainVoiceGuide: Form
 				// 予告がある場合のみ、読み上げる
 				readSpeedNotice = readSpeedNotice || speedLimitNotice >= 0;
 			}
-			// 判定の結果、読み上げるべき場合は読み上げる (読み上げ中でも新情報を優先する)
+			// 判定の結果、読み上げるべき場合は読み上げる
 			if (readSpeedLimit || readSpeedNotice)
 			{
 				string limit = LimitToVoiceString(speedLimit);
@@ -667,7 +667,7 @@ class TrainVoiceGuide: Form
 					else if (readSpeedNotice) voiceStr = notice;
 				}
 				if (voiceStr != null)
-					speedTalker.Play(voiceStr, (int)speedSpeedInput.Value, Talker.PlayType.OverrideIfPlaying);
+					speedTalker.Play(voiceStr, (int)speedSpeedInput.Value, Talker.PlayType.QueueIfPlaying);
 			}
 
 			prevNextStationIndex = nextStationIndex;
