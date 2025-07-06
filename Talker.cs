@@ -41,14 +41,28 @@ class Talker: IDisposable
 		}
 	}
 
-	public void Play(string voiceString, int speed, PlayType playType)
+	public bool Playing
+	{
+		get
+		{
+			return AquesTalkDa_IsPlay(synthInstance) != 0;
+		}
+	}
+
+	public bool Play(string voiceString, int speed, PlayType playType, IntPtr hWnd, uint msg)
 	{
 		if (synthInstance == IntPtr.Zero) throw new ObjectDisposedException("cannot play after disposed");
-		if (AquesTalkDa_IsPlay(synthInstance) != 0)
+		if (this.Playing)
 		{
-			if (playType == PlayType.IgnoreIfPlaying) return;
+			if (playType == PlayType.IgnoreIfPlaying) return false;
 			else if (playType == PlayType.OverrideIfPlaying) AquesTalkDa_Stop(synthInstance);
 		}
-		AquesTalkDa_Play(synthInstance, voiceString, speed, IntPtr.Zero, 0, 0);
+		AquesTalkDa_Play(synthInstance, voiceString, speed, hWnd, msg, 0);
+		return true;
+	}
+
+	public bool Play(string voiceString, int speed, PlayType playType)
+	{
+		return Play(voiceString, speed, playType, IntPtr.Zero, 0);
 	}
 }

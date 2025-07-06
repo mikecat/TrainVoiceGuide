@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Reflection;
@@ -167,10 +168,18 @@ class TrainVoiceGuide: Form
 	private Label statusLimitNoticeTitleLabel;
 	private Label statusLimitNoticeLabel;
 
+	private struct VoiceData
+	{
+		public string voiceString;
+		public int speed;
+		public bool uniqueInQueue;
+	}
+
 	private Timer timer;
 	private Talker testTalker = new Talker();
-	private Talker distanceTimeTalker = new Talker();
-	private Talker speedTalker = new Talker();
+	private Talker infoTalker = new Talker();
+	private List<VoiceData> infoQueue = new List<VoiceData>();
+	private const uint WM_APP = 0x8000;
 
 	private int? prevNextStationIndex = null;
 	private float? prevNextStationDistance = null;
@@ -178,6 +187,52 @@ class TrainVoiceGuide: Form
 	private float? prevSpeed = null;
 	private float? prevSpeedLimit = null;
 	private float? prevSpeedLimitNotice = null;
+
+	private void AddVoiceToQueue(string voiceString, int speed, bool uniqueInQueue)
+	{
+		if (!uniqueInQueue || !infoQueue.Exists((e) => e.uniqueInQueue))
+		{
+			infoQueue.Add(
+				new VoiceData() {
+					voiceString = voiceString,
+					speed = speed,
+					uniqueInQueue = uniqueInQueue,
+				}
+			);
+			if (infoQueue.Count == 1)
+			{
+				// 外部から勝手にメッセージが送られても、おかしくなりにくくする
+				// 外部メッセージの影響で再生中なのにキューが空でも、再生できるようにする
+				infoTalker.Play(voiceString, speed, Talker.PlayType.QueueIfPlaying, this.Handle, WM_APP);
+			}
+		}
+	}
+
+	protected override void WndProc(ref Message m)
+	{
+		base.WndProc(ref m);
+		if (m.Msg == WM_APP)
+		{
+			// 再生が終わったらしい (もしくは、外部から勝手にメッセージが送られた)
+			if (infoQueue.Count <= 1)
+			{
+				// 再生が終わったのはキュー内最後のデータ
+				if (!infoTalker.Playing)
+				{
+					// 本当に再生が終わっているならば、デキューする
+					if (infoQueue.Count > 0) infoQueue.RemoveAt(0);
+				}
+			}
+			else
+			{
+				// キューにまだデータがある
+				// 再生中なら再生しないモードで、再生を試みる
+				bool played = infoTalker.Play(infoQueue[1].voiceString, infoQueue[1].speed, Talker.PlayType.IgnoreIfPlaying, this.Handle, WM_APP);
+				// 再生できた (すなわち、再生が終わっていた) なら、デキューする
+				if (played)infoQueue.RemoveAt(0);
+			}
+		}
+	}
 
 	public TrainVoiceGuide()
 	{
@@ -449,8 +504,9 @@ class TrainVoiceGuide: Form
 		timer.Stop();
 		TrainCrewInput.Dispose();
 		testTalker.Dispose();
-		distanceTimeTalker.Dispose();
-		speedTalker.Dispose();
+		infoTalker.Dispose();
+		testTalker = null;
+		infoTalker = null;
 
 		RegistryIO regIO = RegistryIO.OpenForWrite();
 		if (regIO != null)
@@ -612,13 +668,7 @@ class TrainVoiceGuide: Form
 				else if (distanceTimeEnableTimeDistanceRadio.Checked) voiceStr = time + "," + distance;
 				else if (distanceTimeEnableDistanceTimeRadio.Checked) voiceStr = distance + "," + time;
 				if (voiceStr != null)
-				{
-					distanceTimeTalker.Play(
-						voiceStr,
-						(int)distanceTimeSpeedInput.Value,
-						readDistanceTimeBecauseStop ? Talker.PlayType.QueueIfPlaying : Talker.PlayType.IgnoreIfPlaying
-					);
-				}
+					AddVoiceToQueue(voiceStr, (int)distanceTimeSpeedInput.Value, !readDistanceTimeBecauseStop);
 			}
 
 			// 速度制限およびその予告の読み上げを行うかの判定をする
@@ -675,7 +725,7 @@ class TrainVoiceGuide: Form
 					else if (readSpeedNotice) voiceStr = notice;
 				}
 				if (voiceStr != null)
-					speedTalker.Play(voiceStr, (int)speedSpeedInput.Value, Talker.PlayType.QueueIfPlaying);
+					AddVoiceToQueue(voiceStr, (int)speedSpeedInput.Value, false);
 			}
 
 			prevNextStationIndex = nextStationIndex;
@@ -689,6 +739,7 @@ class TrainVoiceGuide: Form
 
 	private void DistanceTimeSpeedTestClickHandler(object sender, EventArgs e)
 	{
+		if (testTalker == null) return;
 		string time = TimeToVoiceString(60);
 		string distance = DistanceToVoiceString(1000);
 		string voiceStr;
@@ -701,6 +752,7 @@ class TrainVoiceGuide: Form
 
 	private void SpeedSpeedTestClickHandler(object sender, EventArgs e)
 	{
+		if (testTalker == null) return;
 		string limit = LimitToVoiceString(40);
 		string notice = NoticeToVoiceString(25);
 		string voiceStr;
