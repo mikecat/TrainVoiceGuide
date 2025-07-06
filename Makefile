@@ -5,6 +5,7 @@ OPTIONS= \
 	/optimize+ \
 	/warn:4 \
 	/codepage:65001 \
+	/win32icon:tvg.ico \
 	/reference:TrainCrewInput.dll
 
 SOURCES= \

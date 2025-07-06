@@ -252,6 +252,7 @@ class TrainVoiceGuide: Form
 		this.Font = new Font("MS UI Gothic", fontSize, GraphicsUnit.Pixel);
 		this.FormBorderStyle = FormBorderStyle.FixedSingle;
 		this.MaximizeBox = false;
+		this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 		this.Text = "TrainVoiceGuide" + versionString;
 		this.ClientSize = GetSizeOnGrid(25, 19);
 		Font largeFont = new Font("MS UI Gothic", fontSize * 1.8f, GraphicsUnit.Pixel);
