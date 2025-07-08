@@ -97,6 +97,8 @@ TRAIN CREW から API で取得した状態を表示します。
 
 ## 関連リンク
 
+* mikecat/TrainVoiceGuide: TRAIN CREW の残り距離・残り時間・制限速度・制限予告を音声で知らせる外部ツール
+  https://github.com/mikecat/TrainVoiceGuide
 * TRAIN CREW | acty（アクティー）
   https://acty-soft.com/traincrew/
 * 超小型・最軽量 音声合成エンジン | 株式会社アクエスト
